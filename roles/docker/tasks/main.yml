@@ -1,0 +1,7 @@
+---
+
+- include: prerequisites.yml
+
+- include: docker-ce.yml
+
+- include: tools.yml

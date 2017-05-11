@@ -1,0 +1,22 @@
+---
+
+- name: add php5-6 repo
+  apt_repository:
+    repo: "ppa:ondrej/php"
+    update_cache: yes
+
+- name: install tools
+  apt: name={{ item }} state=present
+  with_items:
+    - nginx
+    - php5.6-fpm
+  notify: start nginx
+
+- name: turn off timedatectl
+  shell: timedatectl set-ntp no
+
+- name: install ntp
+  apt: name=ntp state=present
+
+- name: check if mlocate is present
+  apt: name=mlocate state=present

@@ -1,0 +1,36 @@
+---
+
+- user:
+    name: "{{ ansible_user }}"
+    generate_ssh_key: yes
+    ssh_key_bits: 2048
+    ssh_key_file: "{{ home_folder }}/.ssh/id_rsa"
+
+- name: Set authorized key took from file
+  authorized_key:
+    user: "{{ ansible_user }}"
+    state: present
+    key: "{{ lookup('file', '{{ home_folder }}/.ssh/id_rsa.pub') }}"
+
+- name: Update ssh parameters
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    state: present
+    regexp: "^{{ item.key }}"
+    line: "{{ item.key }} {{ item.value }}"
+    insertafter: EOF
+  with_items:
+    - { key: 'PasswordAuthentication', value: 'no' }
+    - { key: 'LoginGraceTime', value: '20' }
+    - { key: 'X11Forwarding', value: 'no' }
+  notify:
+    - restart ssh
+
+- name: move keys to ssl folder
+  copy: src={{ item.ksrc }} dest={{ item.kdst }} mode=0600
+  with_items:
+    - { ksrc: ../files/example_com.csr, kdst: /etc/ssl/certs }
+    - { ksrc: ../files/example_com.key, kdst: /etc/ssl/private }
+
+- name: update certificates
+  shell: update-ca-certificates
